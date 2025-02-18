@@ -7,7 +7,37 @@ version = '1.0-SNAPSHOT'
 
 project.ext.lwjglVersion = "3.3.6"
 project.ext.jomlVersion = "1.10.7"
-project.ext.lwjglNatives = "natives-windows"
+
+// Get the operating system name
+def osName = System.getProperty("os.name").toLowerCase()
+
+switch (osName) {
+    case ~/.*linux.*/:
+        project.ext.lwjglNatives = "natives-linux"
+        def osArch = System.getProperty("os.arch")
+        if (osArch.startsWith("arm") || osArch.startsWith("aarch64")) {
+            project.ext.lwjglNatives += osArch.contains("64") || osArch.startsWith("armv8") ? "-arm64" : "-arm32"
+        } else if (osArch.startsWith("ppc")) {
+            project.ext.lwjglNatives += "-ppc64le"
+        } else if (osArch.startsWith("riscv")) {
+            project.ext.lwjglNatives += "-riscv64"
+        }
+        break
+    case ~/.*windows.*/:
+        def osArch = System.getProperty("os.arch")
+        project.ext.lwjglNatives = osArch.contains("64")
+                ? "natives-windows${osArch.startsWith("aarch64") ? "-arm64" : ""}"
+                : "natives-windows-x86"
+        break
+    case ~/.*mac.*/:
+        project.ext.lwjglNatives = "natives-mac"
+        break
+    default:
+        // If the OS is unknown, set a default
+        project.ext.lwjglNatives = "natives"
+        break
+}
+
 
 repositories {
     mavenCentral()
